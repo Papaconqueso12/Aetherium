@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Moderación</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: #eee;
+      display: flex;
+    }
+    aside {
+      width: 260px;
+      background-color: #1e1e1e;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+    }
+    aside img {
+      width: 120px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    aside h2 {
+      color: #a259ff;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    aside ul {
+      list-style: none;
+      padding: 0;
+    }
+    aside li {
+      padding: 10px;
+      border-bottom: 1px solid #333;
+    }
+    main {
+      flex: 1;
+      padding: 30px;
+    }
+    h1 {
+      color: #a259ff;
+    }
+    .admin-only {
+      background-color: #2a2a2a;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    .admin-only input, .admin-only button {
+      margin: 5px 0;
+      padding: 8px;
+      border: none;
+      border-radius: 4px;
+    }
+    .admin-only input {
+      width: 100%;
+      background-color: #1e1e1e;
+      color: #eee;
+    }
+    .admin-only button {
+      background-color: #a259ff;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <img src="https://example.com/logo.png" alt="Logo" />
+    <h2>Usuarios bloqueados</h2>
+    <ul id="blockedList">
+      <li>Cargando...</li>
+    </ul>
+  </aside>
+  <main>
+    <h1>Dashboard de Moderación</h1>
+    <div class="admin-only">
+      <p>Solo administradores pueden bloquear o desbloquear usuarios.</p>
+      <input type="text" id="adminId" placeholder="Tu ID de administrador" />
+      <input type="text" id="userId" placeholder="ID del usuario a bloquear" />
+      <input type="text" id="reason" placeholder="Motivo del bloqueo" />
+      <button onclick="blockUser()">Bloquear usuario</button>
+      <button onclick="unblockUser()">Desbloquear usuario</button>
+    </div>
+  </main>
+
+  <script>
+    async function loadBlockedUsers() {
+      const res = await fetch('http://localhost:3000/api/blocked');
+      const data = await res.json();
+      const list = document.getElementById('blockedList');
+      list.innerHTML = '';
+
+      if (Object.keys(data).length === 0) {
+        list.innerHTML = '<li>No hay usuarios bloqueados</li>';
+        return;
+      }
+
+      for (const [id, info] of Object.entries(data)) {
+        const li = document.createElement('li');
+        li.textContent = `ID: ${id} — Motivo: ${info.reason}`;
+        list.appendChild(li);
+      }
+    }
+
+    async function blockUser() {
+      const adminId = document.getElementById('adminId').value;
+      const userId = document.getElementById('userId').value;
+      const reason = document.getElementById('reason').value;
+
+      await fetch('http://localhost:3000/api/block', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminId, userId, reason })
+      });
+
+      loadBlockedUsers();
+    }
+
+    async function unblockUser() {
+      const adminId = document.getElementById('adminId').value;
+      const userId = document.getElementById('userId').value;
+
+      await fetch('http://localhost:3000/api/unblock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminId, userId })
+      });
+
+      loadBlockedUsers();
+    }
+
+    loadBlockedUsers();
+  </script>
+</body>
+</html>
